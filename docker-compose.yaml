@@ -1,9 +1,11 @@
 version: '3'
 
 services:
+
+  # MariaDB database
   db:
     image: mariadb
-    container_name: throwaway-db
+    container_name: wp-tests-db
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
       MYSQL_DATABASE: ${MYSQL_DATABASE:-wordpress}
@@ -12,44 +14,48 @@ services:
     volumes:
       - db-data:/var/lib/mysql
 
+  # Redis cache
   cache:
     image: redis:alpine
-    container_name: throwaway-cache
+    container_name: wp-tests-cache
 
+  # MailHog mail catcher
   mail:
     image: mailhog/mailhog
-    container_name: throwaway-mail
+    container_name: wp-tests-mail
     ports:
       - ${MAIL_PORT:-8001}:8025
 
+  # PhpMyAdmin
   pma:
     image: phpmyadmin
-    container_name: throwaway-pma
+    container_name: wp-tests-pma
     environment:
-      PMA_HOST: throwaway-db
+      PMA_HOST: wp-tests-db
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
       MYSQL_USER: ${MYSQL_USER:-wordpress}
       MYSQL_PASSWORD: ${MYSQL_PASSWORD:-wordpress}
     ports:
       - ${PMA_PORT:-8002}:80
 
+  # WordPress
   wp:
     build:
       context: ./
       args:
         - WORDPRESS_VERSION=${WORDPRESS_VERSION:-php7.4}
-    container_name: throwaway-wp
+    container_name: wp-tests-wp
     environment:
-      WORDPRESS_DB_HOST: throwaway-db
+      WORDPRESS_DB_HOST: wp-tests-db
       WORDPRESS_DB_USER: ${MYSQL_USER:-wordpress}
       WORDPRESS_DB_PASSWORD: ${MYSQL_PASSWORD:-wordpress}
       WORDPRESS_DB_NAME: ${MYSQL_DATABASE:-wordpress}
       WORDPRESS_CONFIG_EXTRA: |
         define( 'WP_DEGUB_DISPLAY', false );
         define( 'WP_DEBUG_LOG', true );
-        define( 'WP_REDIS_HOST', 'throwaway-cache' );
+        define( 'WP_REDIS_HOST', 'wp-tests-cache' );
         define( 'WPMS_ON', true );
-        define( 'WPMS_SMTP_HOST', 'throwaway-mail' );
+        define( 'WPMS_SMTP_HOST', 'wp-tests-mail' );
         define( 'WPMS_SMTP_PORT', 1025 );
         define( 'WPMS_SSL', '' );
         define( 'WPMS_SMTP_AUTH', false );
@@ -63,22 +69,23 @@ services:
     ports:
       - ${WORDPRESS_PORT:-8000}:80
 
+  # WordPress installation
   wp-cli:
     image: wordpress:cli-php7.4
-    container_name: throwaway-wp-cli
+    container_name: wp-tests-wp-cli
     environment:
-      WORDPRESS_HOST: ${WORDPRESS_HOST:-localhost} # To pass to the installer
+      WORDPRESS_HOST: ${WORDPRESS_HOST:-localhost} # To pass to wp-cli
       WORDPRESS_PORT: ${WORDPRESS_PORT:-8000}
       WORDPRESS_ADMIN_USER: ${WORDPRESS_ADMIN_USER:-admin}
       WORDPRESS_ADMIN_PASS: ${WORDPRESS_ADMIN_PASS:-password}
-      WORDPRESS_DB_HOST: throwaway-db
+      WORDPRESS_DB_HOST: wp-tests-db
       WORDPRESS_DB_USER: ${MYSQL_USER:-wordpress}
       WORDPRESS_DB_PASSWORD: ${MYSQL_PASSWORD:-wordpress}
       WORDPRESS_DB_NAME: ${MYSQL_DATABASE:-wordpress}
       WORDPRESS_CONFIG_EXTRA: |
         define( 'WP_DEGUB_DISPLAY', false );
         define( 'WP_DEBUG_LOG', true );
-        define( 'WP_REDIS_HOST', 'throwaway-cache' );
+        define( 'WP_REDIS_HOST', 'wp-tests-cache' );
     volumes_from:
       - wp
     user: xfs
@@ -94,7 +101,7 @@ services:
 
 networks:
   default:
-    name: throwaway-network
+    name: wp-tests-network
 
 volumes:
   db-data:
