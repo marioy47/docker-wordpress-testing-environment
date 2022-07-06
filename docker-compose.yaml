@@ -51,8 +51,9 @@ services:
       WORDPRESS_DB_PASSWORD: ${MYSQL_PASSWORD:-wordpress}
       WORDPRESS_DB_NAME: ${MYSQL_DATABASE:-wordpress}
       WORDPRESS_CONFIG_EXTRA: |
-        define( 'WP_DEGUB_DISPLAY', false );
-        define( 'WP_DEBUG_LOG', true );
+        define( 'WP_DEBUG', true );
+        define( 'WP_DEBUG_DISPLAY', false );
+        define( 'WP_DEBUG_LOG', '/tmp/wordpress/wordpress.log' );
         define( 'WP_REDIS_HOST', 'wp-tests-cache' );
         define( 'WPMS_ON', true );
         define( 'WPMS_SMTP_HOST', 'wp-tests-mail' );
@@ -66,6 +67,8 @@ services:
       - ./xdebug.ini:/usr/local/etc/php/conf.d/xdebug.ini
       - ./themes:/var/www/html/wp-content/themes
       - ./plugins:/var/www/html/wp-content/plugins
+      - ./logs/xdebug:/tmp/xdebug
+      - ./logs/wordpress:/tmp/wordpress
     ports:
       - ${WORDPRESS_PORT:-8000}:80
 
