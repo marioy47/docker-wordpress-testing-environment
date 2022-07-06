@@ -1,0 +1,102 @@
+version: '3'
+
+services:
+  db:
+    image: mariadb
+    container_name: throwaway-db
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-wordpress}
+      MYSQL_USER: ${MYSQL_USER:-wordpress}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-wordpress}
+    volumes:
+      - db-data:/var/lib/mysql
+
+  cache:
+    image: redis:alpine
+    container_name: throwaway-cache
+
+  mail:
+    image: mailhog/mailhog
+    container_name: throwaway-mail
+    ports:
+      - ${MAIL_PORT:-8001}:8025
+
+  pma:
+    image: phpmyadmin
+    container_name: throwaway-pma
+    environment:
+      PMA_HOST: throwaway-db
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
+      MYSQL_USER: ${MYSQL_USER:-wordpress}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-wordpress}
+    ports:
+      - ${PMA_PORT:-8002}:80
+
+  wp:
+    build:
+      context: ./
+      args:
+        - WORDPRESS_VERSION=${WORDPRESS_VERSION:-php7.4}
+    container_name: throwaway-wp
+    environment:
+      WORDPRESS_DB_HOST: throwaway-db
+      WORDPRESS_DB_USER: ${MYSQL_USER:-wordpress}
+      WORDPRESS_DB_PASSWORD: ${MYSQL_PASSWORD:-wordpress}
+      WORDPRESS_DB_NAME: ${MYSQL_DATABASE:-wordpress}
+      WORDPRESS_CONFIG_EXTRA: |
+        define( 'WP_DEGUB_DISPLAY', false );
+        define( 'WP_DEBUG_LOG', true );
+        define( 'WP_REDIS_HOST', 'throwaway-cache' );
+        define( 'WPMS_ON', true );
+        define( 'WPMS_SMTP_HOST', 'throwaway-mail' );
+        define( 'WPMS_SMTP_PORT', 1025 );
+        define( 'WPMS_SSL', '' );
+        define( 'WPMS_SMTP_AUTH', false );
+        define( 'WPMS_SMTP_AUTOTLS', true );
+        define( 'WPMS_MAILER', 'smtp' );
+    volumes:
+      - wp-html:/var/www/html
+      - ./xdebug.ini:/usr/local/etc/php/conf.d/xdebug.ini
+      - ./themes:/var/www/html/wp-content/themes
+      - ./plugins:/var/www/html/wp-content/plugins
+    ports:
+      - ${WORDPRESS_PORT:-8000}:80
+
+  wp-cli:
+    image: wordpress:cli-php7.4
+    container_name: throwaway-wp-cli
+    environment:
+      WORDPRESS_HOST: ${WORDPRESS_HOST:-localhost} # To pass to the installer
+      WORDPRESS_PORT: ${WORDPRESS_PORT:-8000}
+      WORDPRESS_ADMIN_USER: ${WORDPRESS_ADMIN_USER:-admin}
+      WORDPRESS_ADMIN_PASS: ${WORDPRESS_ADMIN_PASS:-password}
+      WORDPRESS_DB_HOST: throwaway-db
+      WORDPRESS_DB_USER: ${MYSQL_USER:-wordpress}
+      WORDPRESS_DB_PASSWORD: ${MYSQL_PASSWORD:-wordpress}
+      WORDPRESS_DB_NAME: ${MYSQL_DATABASE:-wordpress}
+      WORDPRESS_CONFIG_EXTRA: |
+        define( 'WP_DEGUB_DISPLAY', false );
+        define( 'WP_DEBUG_LOG', true );
+        define( 'WP_REDIS_HOST', 'throwaway-cache' );
+    volumes_from:
+      - wp
+    user: xfs
+    command:
+      - sh
+      - -c
+      - |
+        sleep 10
+        wp core install --path=/var/www/html --title=WordPress --admin_user=$${WORDPRESS_ADMIN_USER} --admin_password=$${WORDPRESS_ADMIN_PASS} --admin_email=admin@example.com --skip-email --url="http://$${WORDPRESS_HOST}:$${WORDPRESS_PORT}"
+        wp plugin install redis-cache --activate
+        wp redis enable
+        echo "Go to http://$${WORDPRESS_HOST}:$${WORDPRESS_PORT}/wp-admin/ with User $${WORDPRESS_ADMIN_USER} and password $${WORDPRESS_ADMIN_PASS}"
+
+networks:
+  default:
+    name: throwaway-network
+
+volumes:
+  db-data:
+  wp-html:
+
