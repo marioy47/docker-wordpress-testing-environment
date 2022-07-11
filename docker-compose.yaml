@@ -64,7 +64,9 @@ services:
         define( 'WPMS_MAILER', 'smtp' );
     volumes:
       - wp-html:/var/www/html
+      - ./docker/msmtprc:/etc/msmtprc
       - ./docker/php-config.ini:/usr/local/etc/php/conf.d/php-config.ini
+      - ./docker/msmtp-mailhost-fixer.php:/var/www/html/wp-content/mu-plugins/msmtp-mailhost-fixer.php
       - ./themes:/var/www/html/wp-content/themes
       - ./plugins:/var/www/html/wp-content/plugins
       - ./logs/xdebug:/tmp/xdebug
@@ -98,7 +100,7 @@ services:
       - |
         sleep 10
         wp core install --path=/var/www/html --title=WordPress --admin_user=$${WORDPRESS_ADMIN_USER} --admin_password=$${WORDPRESS_ADMIN_PASS} --admin_email=admin@example.com --skip-email --url="http://$${WORDPRESS_HOST}:$${WORDPRESS_PORT}"
-        wp plugin install redis-cache wp-mail-smtp --activate
+        wp plugin install redis-cache --activate
         wp redis enable
         echo "Go to http://$${WORDPRESS_HOST}:$${WORDPRESS_PORT}/wp-admin/ with User $${WORDPRESS_ADMIN_USER} and password $${WORDPRESS_ADMIN_PASS}"
 
