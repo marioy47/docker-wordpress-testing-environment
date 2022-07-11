@@ -46,6 +46,7 @@ services:
         - WORDPRESS_VERSION=${WORDPRESS_VERSION:-php7.4}
     container_name: wp-tests-wp
     environment:
+      VIRTUAL_HOST: ${WORDPRESS_HOST:-localhost}
       WORDPRESS_DB_HOST: wp-tests-db
       WORDPRESS_DB_USER: ${MYSQL_USER:-wordpress}
       WORDPRESS_DB_PASSWORD: ${MYSQL_PASSWORD:-wordpress}
@@ -71,8 +72,17 @@ services:
       - ./plugins:/var/www/html/wp-content/plugins
       - ./logs/xdebug:/tmp/xdebug
       - ./logs/wordpress:/tmp/wordpress
+
+  proxy:
+    image: jwilder/nginx-proxy:alpine
+    container_name: wp-test-proxy
     ports:
       - ${WORDPRESS_PORT:-8000}:80
+    volumes:
+      - /var/run/docker.sock:/tmp/docker.sock:ro
+      - cert-data:/etc/nginx/certs
+
+
 
   # WordPress installation
   wp-cli:
@@ -111,4 +121,5 @@ networks:
 volumes:
   db-data:
   wp-html:
+  cert-data:
 
