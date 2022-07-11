@@ -41,7 +41,7 @@ services:
   # WordPress
   wp:
     build:
-      context: ./
+      context: ./docker/
       args:
         - WORDPRESS_VERSION=${WORDPRESS_VERSION:-php7.4}
     container_name: wp-tests-wp
@@ -64,7 +64,7 @@ services:
         define( 'WPMS_MAILER', 'smtp' );
     volumes:
       - wp-html:/var/www/html
-      - ./xdebug.ini:/usr/local/etc/php/conf.d/xdebug.ini
+      - ./docker/php-config.ini:/usr/local/etc/php/conf.d/php-config.ini
       - ./themes:/var/www/html/wp-content/themes
       - ./plugins:/var/www/html/wp-content/plugins
       - ./logs/xdebug:/tmp/xdebug
