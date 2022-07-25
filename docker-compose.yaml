@@ -46,7 +46,6 @@ services:
         - WORDPRESS_VERSION=${WORDPRESS_VERSION:-php7.4}
     container_name: wp-tests-wp
     environment:
-      VIRTUAL_HOST: ${WORDPRESS_HOST:-localhost}
       WORDPRESS_DB_HOST: wp-tests-db
       WORDPRESS_DB_USER: ${MYSQL_USER:-wordpress}
       WORDPRESS_DB_PASSWORD: ${MYSQL_PASSWORD:-wordpress}
@@ -74,15 +73,22 @@ services:
       - ./logs/wordpress:/tmp/wordpress
 
   proxy:
-    image: jwilder/nginx-proxy:alpine
-    container_name: wp-test-proxy
+    image: nginx:alpine
+    container_name: wp-tests-proxy
+    environment:
+      WORDPRESS_HOST: wp-tests-wp
+      WORDPRESS_PROD_URL: ${WORDPRESS_PROD_URL:-http://wp-tests-wp}
+    volumes:
+      - ./docker/nginx-templates:/etc/nginx/templates:ro
     ports:
       - ${WORDPRESS_PORT:-8000}:80
-    volumes:
-      - /var/run/docker.sock:/tmp/docker.sock:ro
-      - cert-data:/etc/nginx/certs
-
-
+    command:
+      - sh
+      - -c
+      - |
+        envsubst '$$WORDPRESS_HOST,$$WORDPRESS_PROD_URL' < /etc/nginx/templates/wordpress.conf > /etc/nginx/conf.d/wordpress.conf
+        rm /etc/nginx/conf.d/default.conf
+        nginx -g 'daemon off;'
 
   # WordPress installation
   wp-cli:
