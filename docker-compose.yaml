@@ -87,7 +87,7 @@ services:
       - -c
       - |
         envsubst '$$WORDPRESS_HOST,$$WORDPRESS_PROD_URL' < /etc/nginx/templates/wordpress.conf > /etc/nginx/conf.d/wordpress.conf
-        rm /etc/nginx/conf.d/default.conf
+        rm -f /etc/nginx/conf.d/default.conf
         nginx -g 'daemon off;'
 
   # WordPress installation
