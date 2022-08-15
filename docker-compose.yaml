@@ -64,7 +64,7 @@ services:
       - ./logs/xdebug:/tmp/xdebug
       - ./logs/wordpress:/tmp/wordpress
       # WordPress files
-      - wp-html:/var/www/html
+      - ${WORDPRESS_HTML_PATH:-wp-html}:/var/www/html
 
   # Proxy requests (enable ssl)
   proxy:
@@ -74,7 +74,7 @@ services:
       WORDPRESS_HOST: wp-tests-wp
       WORDPRESS_PROD_URL: ${WORDPRESS_PROD_URL:-http://wp-tests-wp}
     volumes:
-      - ./docker/nginx-templates:/etc/nginx/templates:ro
+      - ./docker/proxy/nginx-templates:/etc/nginx/templates:ro
       - cert-data:/etc/nginx/certs
     ports:
       - ${WORDPRESS_PORT:-8000}:80
