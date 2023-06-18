@@ -1,6 +1,6 @@
 ARG WORDPRESS_VERSION
 
-FROM wordpress:${WORDPRESS_VERSION:-php7.4}
+FROM wordpress:${WORDPRESS_VERSION}
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \

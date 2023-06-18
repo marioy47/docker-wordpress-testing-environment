@@ -2,3 +2,5 @@ plugins
 themes
 .env
 logs
+wp-www
+docker-compose.*.yaml

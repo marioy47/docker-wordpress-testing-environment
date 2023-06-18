@@ -43,7 +43,7 @@ services:
     build:
       context: ./docker/wp/
       args:
-        - WORDPRESS_VERSION=${WORDPRESS_VERSION:-php7.4}
+        - WORDPRESS_VERSION=${WORDPRESS_VERSION:-php8.0}
     container_name: wp-tests-wp
     environment:
       WORDPRESS_DB_HOST: wp-tests-db
@@ -103,7 +103,7 @@ services:
 
   # WordPress installation
   wp-cli:
-    image: wordpress:cli-php7.4
+    image: wordpress:cli-php8.0
     container_name: wp-tests-wp-cli
     environment:
       WORDPRESS_HOST: ${WORDPRESS_HOST:-localhost} # To pass to wp-cli
